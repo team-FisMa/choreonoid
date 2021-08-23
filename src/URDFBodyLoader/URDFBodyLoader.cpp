@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <stdio.h>
+
 #include <boost/range/size.hpp>  // becomes STL from C++17
 
 #include <cnoid/Body>
@@ -178,9 +180,45 @@ bool URDFBodyLoader::load(Body* body, const std::string& filename)
 bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
 {
     pugi::xml_document doc;
-    const pugi::xml_parse_result result = doc.load_file(filename.c_str());
-    if (!result) {
-        os() << "Error: parsing XML failed: " << result.description() << endl;
+
+    const string suffix = ".xacro";
+    if (filename.size() >= suffix.size()
+        && std::equal(suffix.begin(),
+                      suffix.end(),
+                      filename.end() - suffix.size())) {
+        // parses and reads a xacro-formatted URDF
+        char buffer[128];
+        const string command = "xacro " + filename;
+        std::string urdf_content;
+        FILE* pipe = popen(command.data(), "r");
+        if (!pipe) {
+            os() << "Error: popen() for xacro parsing failed." << endl;
+            return false;
+        }
+        try {
+            while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+                urdf_content += buffer;
+            }
+        } catch (...) {
+            pclose(pipe);
+            os() << "Error: copying xacro contents failed." << endl;
+            return false;
+        }
+        pclose(pipe);
+
+        const pugi::xml_parse_result result = doc.load_string(
+            urdf_content.data());
+        if (!result) {
+            os() << "Error: parsing XML failed: " << result.description()
+                 << endl;
+        }
+    } else {
+        // loads a URDF
+        const pugi::xml_parse_result result = doc.load_file(filename.c_str());
+        if (!result) {
+            os() << "Error: parsing XML failed: " << result.description()
+                 << endl;
+        }
     }
 
     // checks if only one 'robot' tag exists in the URDF
