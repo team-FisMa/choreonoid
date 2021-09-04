@@ -222,8 +222,11 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     }
 
     // checks if only one 'robot' tag exists in the URDF
-    if (++doc.children(ROBOT).begin() != doc.children(ROBOT).end()) {
-        os() << "Error: Multiple 'robot' tags are found.";
+    if (doc.child(ROBOT).empty()) {
+        os() << "Error: 'robot' tag is not found.";
+        return false;
+    } else if (++doc.children(ROBOT).begin() != doc.children(ROBOT).end()) {
+        os() << "Error: multiple 'robot' tags are found.";
         return false;
     }
 
