@@ -302,27 +302,31 @@ bool URDFBodyLoader::Impl::loadLink(LinkPtr link, const xml_node& linkNode)
         }
     }
 
-    // 'visual' (optional)
-    const xml_node& visualNode = linkNode.child(VISUAL);
-    if (visualNode.empty()) {
+    // 'visual' (optional, multiple definition are allowed)
+    if (linkNode.child(VISUAL).empty()) {
         os() << "Debug: link '" << name << "' has no visual data." << endl;
     } else {
-        if (!loadVisualTag(link, visualNode)) {
-            os() << "Note: The above error occurs while loading link '" << name
-                 << "'." << endl;
-            return false;
+        const auto visualNodes = linkNode.children(VISUAL);
+        for (xml_node& visualNode : visualNodes) {
+            if (!loadVisualTag(link, visualNode)) {
+                os() << "Note: The above error occurs while loading link '"
+                     << name << "'." << endl;
+                return false;
+            }
         }
     }
 
-    // 'collision' (optional)
-    const xml_node& collisionNode = linkNode.child(COLLISION);
-    if (collisionNode.empty()) {
+    // 'collision' (optional, multiple definition are allowed)
+    if (linkNode.child(COLLISION).empty()) {
         os() << "Debug: link '" << name << "' has no collision data." << endl;
     } else {
-        if (!loadCollisionTag(link, collisionNode)) {
-            os() << "Note: The above error occurs while loading link '" << name
-                 << "'." << endl;
-            return false;
+        const auto collisionNodes = linkNode.children(COLLISION);
+        for (xml_node& collisionNode : collisionNodes) {
+            if (!loadCollisionTag(link, collisionNode)) {
+                os() << "Note: The above error occurs while loading link '"
+                     << name << "'." << endl;
+                return false;
+            }
         }
     }
 
@@ -611,6 +615,7 @@ bool URDFBodyLoader::Impl::readGeometryTag(const xml_node& geometryNode,
 
     return true;
 }
+
 
 bool URDFBodyLoader::Impl::loadJoint(
     std::unordered_map<string, LinkPtr>& linkMap, const xml_node& jointNode)
