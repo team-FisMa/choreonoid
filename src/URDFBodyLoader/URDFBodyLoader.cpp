@@ -275,8 +275,10 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     vector<LinkPtr> rootLinks = findRootLinks(linkMap);
     if (rootLinks.empty()) {
         os() << "Error: no root link is found." << endl;
+        return false;
     } else if (rootLinks.size() > 1) {
         os() << "Error: multiple root links are found." << endl;
+        return false;
     }
     body->setRootLink(rootLinks.at(0));
 
