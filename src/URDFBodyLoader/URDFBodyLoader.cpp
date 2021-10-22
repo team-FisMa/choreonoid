@@ -245,13 +245,28 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
         if (!loadLink(link, linkNode)) {
             return false;
         }
-        linkMap.emplace(link->name(), link);
+        const auto result = linkMap.emplace(link->name(), link);
+        if (!result.second) {
+            os() << "Error: multiple links named \"" << link->name()
+                 << "\" are found." << endl;
+            return false;
+        }
     }
+
+    // creates a joint dictionary to check independence of joint names
+    std::unordered_map<string, int> jointMap;
+    jointMap.reserve(boost::size(jointNodes));
 
     // loads all joints with creating a link tree
     for (xml_node jointNode : jointNodes) {
         if (!loadJoint(linkMap, jointNode)) {
-            // TODO: print some err msg
+            return false;
+        }
+        const string jointName = jointNode.attribute(NAME).as_string();
+        const auto result = jointMap.emplace(jointName, 0);
+        if (!result.second) {
+            os() << "Error: multiple joints named \"" << jointName
+                 << "\" are found." << endl;
             return false;
         }
     }
