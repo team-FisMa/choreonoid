@@ -233,6 +233,12 @@ public:
     const Vector3& calcCenterOfMass();
     const Vector3& centerOfMass() const;
 
+    const Vector3& calcVelocityOfCenterOfMass();
+    const Vector3& velocityOfCenterOfMass() const;
+
+    const Vector3& calcAccelerationOfCenterOfMass();
+    const Vector3& accelerationOfCenterOfMass() const;
+
     void calcTotalMomentum(Vector3& out_P, Vector3& out_L);
 
     void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) {

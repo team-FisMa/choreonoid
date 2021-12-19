@@ -280,7 +280,15 @@ public:
     const Vector3& wc() const { return wc_; }
     const Vector3& centerOfMassGlobal() const { return wc_; }
     Vector3& wc() { return wc_; }
-        
+
+    /// velocity of center of mass (world coordinate)
+    const Vector3& wdc() const { return wdc_; }
+    Vector3& wdc() { return wdc_; }
+
+    /// acceleration of of center mass (world coordinate)
+    const Vector3& wddc() const { return wddc_; }
+    Vector3& wddc() { return wddc_; }
+
     /// mass
     double m() const { return m_; }
     double mass() const { return m_; }
@@ -491,6 +499,8 @@ private:
 
     Vector3 c_;
     Vector3 wc_;
+    Vector3 wdc_;
+    Vector3 wddc_;
     double m_;
     Matrix3 I_;
 

@@ -49,6 +49,8 @@ public:
     CacheMap cacheMap;
     MappingPtr info;
     Vector3 centerOfMass;
+    Vector3 velocityOfCenterOfMass;
+    Vector3 accelerationOfCenterOfMass;
     double mass;
     std::string name;
     std::string modelName;
@@ -106,6 +108,8 @@ void Body::Impl::initialize(Body* self, Link* rootLink)
 {
     self->currentTimeFunction = getCurrentTime;
     centerOfMass.setZero();
+    velocityOfCenterOfMass.setZero();
+    accelerationOfCenterOfMass.setZero();
     info = new Mapping;
 
     self->rootLink_ = nullptr;
@@ -118,6 +122,8 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
     currentTimeFunction = org->currentTimeFunction;
 
     impl->centerOfMass = org->impl->centerOfMass;
+    impl->velocityOfCenterOfMass = org->impl->velocityOfCenterOfMass;
+    impl->accelerationOfCenterOfMass = org->impl->accelerationOfCenterOfMass;
     impl->name = org->impl->name;
     impl->modelName = org->impl->modelName;
     impl->info = org->impl->info;
@@ -586,6 +592,16 @@ const Vector3& Body::centerOfMass() const
     return impl->centerOfMass;
 }
 
+const Vector3& Body::velocityOfCenterOfMass() const
+{
+    return impl->velocityOfCenterOfMass;
+}
+
+const Vector3& Body::accelerationOfCenterOfMass() const
+{
+    return impl->accelerationOfCenterOfMass;
+}
+
 
 void Body::initializePosition()
 {
@@ -635,8 +651,8 @@ const Vector3& Body::calcCenterOfMass()
     double m = 0.0;
     Vector3 mc = Vector3::Zero();
     int n = linkTraverse_.numLinks();
-    
-    for(int i=0; i < n; i++){
+
+    for (int i = 0; i < n; i++) {
         Link* link = linkTraverse_[i];
         link->wc().noalias() = link->R() * link->c() + link->p();
         mc.noalias() += link->m() * link->wc();
@@ -647,6 +663,45 @@ const Vector3& Body::calcCenterOfMass()
     impl->mass = m;
 
     return impl->centerOfMass;
+}
+
+const Vector3& Body::calcVelocityOfCenterOfMass()
+{
+    double m = 0.0;
+    Vector3 vmc = Vector3::Zero();
+    int n = linkTraverse_.numLinks();
+
+    for (int i = 0; i < n; i++) {
+        Link* link = linkTraverse_[i];
+        link->wdc().noalias() = link->v() + link->w().cross(link->R() * link->c());
+        vmc.noalias() += link->m() * link->wc();
+        m += link->m();  // calcCenterOfMassの後ならimpl->massでいいのでは
+    }
+
+    impl->velocityOfCenterOfMass = vmc / m;
+    impl->mass = m;
+
+    return impl->velocityOfCenterOfMass;
+}
+
+const Vector3& Body::calcAccelerationOfCenterOfMass()
+{
+    double m = 0.0;
+    Vector3 amc = Vector3::Zero();
+    int n = linkTraverse_.numLinks();
+
+    for (int i = 0; i < n; i++) {
+        Link* link = linkTraverse_[i];
+        Vector3 temp = link->R() * link->c();
+        link->wddc().noalias() = link->dv() + link->dw().cross(temp) + link->w().cross(link->w().cross(temp));
+        amc.noalias() += link->m() * link->wddc();
+        m += link->m();
+    }
+
+    impl->accelerationOfCenterOfMass = amc / m;
+    impl->mass = m;
+
+    return impl->accelerationOfCenterOfMass;
 }
 
 
