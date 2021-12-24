@@ -671,10 +671,12 @@ const Vector3& Body::calcVelocityOfCenterOfMass()
     Vector3 vmc = Vector3::Zero();
     int n = linkTraverse_.numLinks();
 
+    linkTraverse_.calcForwardKinematics(true, false);
+
     for (int i = 0; i < n; i++) {
         Link* link = linkTraverse_[i];
         link->wdc().noalias() = link->v() + link->w().cross(link->R() * link->c());
-        vmc.noalias() += link->m() * link->wc();
+        vmc.noalias() += link->m() * link->wdc();
         m += link->m();  // calcCenterOfMassの後ならimpl->massでいいのでは
     }
 
@@ -689,6 +691,8 @@ const Vector3& Body::calcAccelerationOfCenterOfMass()
     double m = 0.0;
     Vector3 amc = Vector3::Zero();
     int n = linkTraverse_.numLinks();
+
+    linkTraverse_.calcForwardKinematics(true, true);
 
     for (int i = 0; i < n; i++) {
         Link* link = linkTraverse_[i];
